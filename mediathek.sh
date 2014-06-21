@@ -35,7 +35,7 @@ for ((n=0;n<${#sendung[@]};n++)); do
     p=${pageid[$n]}
     m=${nfo[$n]}
 
-    for folge in $(curl -s "$b/?docId=$d&pageId=$p&goto=3" | grep -o '/Folge[^"]*' | sed 's/\&amp;/\&/g'); do
+    for folge in $((curl -s "$b/?docId=$d&pageId=$p"; curl -s "$b/?docId=$d&pageId=$p&goto=2"; curl -s "$b/?docId=$d&pageId=$p&goto=3") | grep -o '/Folge[^"]*' | sed 's/\&amp;/\&/g'); do
         f="${folge/\/Folge-}"
         f="${f/\?*}"
         f="$(echo "$f" | sed 's/-$//')"
@@ -75,7 +75,7 @@ echo "$(date +$df) down  $q $f" >> "$log"
                 m_year="$(grep SENDETERMIN "$tmp2" | sed -n "s/^.* \([0-3][0-9]\)\.\([01][0-9]\)\.\([12][0-9]\) .*$/20\3-\2-\1/p")"
                 m_desc="$(sed -n "s/^<meta name=\"description\" content=\"\(.*\)\" \/>/\1/p" "$tmp2" | sed "s/\"/\&quot;/g")"
 
-                $ap "$tmp" -o "$droptmp/$fn.mp4" --stik "TV Show" --title "$m_title" --TVShowName "$m_show" --TVSeasonNum "$m_season" --TVEpisodeNum "$m_ep" --year "$m_year" --description "$m_desc" $m_art > /dev/null
+                $ap "$tmp" -o "$droptmp/$fn.mp4" --stik "TV Show" --title "$m_title" --TVShowName "$m_show" --album "$m_show" --TVSeasonNum "$m_season" --disk "$m_season" --TVEpisodeNum "$m_ep" --tracknum "$m_ep" --year "$m_year" --description "$m_desc" $m_art > /dev/null
                 mv "$droptmp/$fn.mp4" "$save"
                 rm -f $tmp2 $artwork
             fi
