@@ -34,6 +34,7 @@ for ((n=0;n<${#sendung[@]};n++)); do
     d=${docid[$n]}
     p=${pageid[$n]}
     m=${nfo[$n]}
+    m2=${nfo2[$n]}
 
     for folge in $((curl -s "$b/?docId=$d&pageId=$p"; curl -s "$b/?docId=$d&pageId=$p&goto=2"; curl -s "$b/?docId=$d&pageId=$p&goto=3") | grep -o '/Folge[^"]*' | sed 's/\&amp;/\&/g'); do
         f="${folge/\/Folge-}"
@@ -43,7 +44,7 @@ for ((n=0;n<${#sendung[@]};n++)); do
         save="$drop/$pf.mp4"
 
         curl -s $b/$folge | sed 's,<source,\'$'\n''&,g' | awk '/data-quality="[SML]"/{split($2,d,"\""); split($3,u,"\""); c[d[2]]++; print d[2] c[d[2]],u[2]}' | while read q u; do
-            grep -q " down  $q $f" "$log" && continue
+            grep -q " down  $q $s-$f" "$log" && continue
             # q = S1, M1, L1, L2
             if [ "$q" != "L2" ]; then
                 continue
@@ -56,12 +57,15 @@ for ((n=0;n<${#sendung[@]};n++)); do
                 curl -so "$tmp" "$u"
             done
             if [ $? -eq 0 ]; then
-echo "$(date +$df) down  $q $f" >> "$log"
+echo "$(date +$df) down  $q $s-$f" >> "$log"
                 # get metadata
                 fn="${f/-*}"
                 tmp2=$(mktemp -t mediathekXXXXXX)
                 artwork=$(mktemp -t mediathekXXXXXX)
-                curl -so "$tmp2" "$(printf "$m" "$fn")"
+                curl -Lso "$tmp2" "$(printf "$m" "$fn")"
+                if ! grep -q "property" "$tmp2"; then
+                    curl -Lso "$tmp2" "$(printf "$m2" "$fn")"
+                fi
                 curl -so "$artwork" "$(sed -n "s/^<meta property=\"og:image\" content=\"\(.*\)\" \/>/\1/p" "$tmp2" | sed "s/\"/\&quot;/g")"
                 if [ $? -ne 0 ]; then
                     m_art=""
